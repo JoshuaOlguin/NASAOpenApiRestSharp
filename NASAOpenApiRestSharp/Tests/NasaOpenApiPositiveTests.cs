@@ -5,11 +5,26 @@ using System.Net;
 
 namespace NASAOpenApiRestSharp.Tests
 {
+    /// <summary>
+    /// Contains positive integration tests for NASA Open APIs.
+    /// </summary>
+    /// <remarks>
+    /// Verifies successful responses and expected response data from the
+    /// Neo Feed, Neo Lookup, and Neo Browse endpoints.
+    /// </remarks>
     [TestFixture]
     [Parallelizable(ParallelScope.All)]
     [Category("Positive")]
     public class NasaOpenApiPositiveTests : NasaApiTestBase
     {
+        /// <summary>
+        /// Verifies that the Neo Feed endpoint returns near-Earth asteroids
+        /// for the specified date range.
+        /// </summary>
+        /// <remarks>
+        /// Validates the HTTP status, response content type, asteroid count,
+        /// date-range keys, and self-link values.
+        /// </remarks>
         [Test(Description = "Verify Neo Feed API endpoint returns list of near earth asteroids by date range.")]
         public async Task NeoFeed_ReturnsAsteroidsByDateRange()
         {
@@ -34,6 +49,14 @@ namespace NASAOpenApiRestSharp.Tests
             Assert.That(body.Links.Self, Does.Contain(ValidRange.End));
         }
 
+        /// <summary>
+        /// Verifies that the Neo Lookup endpoint returns asteroid information
+        /// for a NASA JPL small-body identifier.
+        /// </summary>
+        /// <remarks>
+        /// Validates the asteroid identifier, designation, estimated diameter,
+        /// close-approach data, and orbital classification.
+        /// </remarks>
         [Test(Description = "Verify Neo Lookup API endpoint fetches asteroid information by NASA JPL small body id.")]
         public async Task NeoLookup_ReturnsAsteroidById()
         {
@@ -63,6 +86,14 @@ namespace NASAOpenApiRestSharp.Tests
             });
         }
 
+        /// <summary>
+        /// Verifies that the Neo Browse endpoint returns a paginated list
+        /// of known near-Earth asteroids.
+        /// </summary>
+        /// <remarks>
+        /// Validates pagination metadata, navigation links, collection size,
+        /// and uniqueness of asteroid identifiers.
+        /// </remarks>
         [Test(Description = "Verify Neo Browse API endpoint returns a paginated list of all known near earth asteroids.")]
         public async Task NeoBrowse_ReturnsPaginatedAsteroids()
         {
