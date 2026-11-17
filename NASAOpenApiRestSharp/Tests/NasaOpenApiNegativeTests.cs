@@ -14,7 +14,7 @@ namespace NASAOpenApiRestSharp.Tests
             var response = await GetAsync(NeoFeedResource, new Dictionary<string, string>
             {
                 ["start_date"] = "2026-10-01",
-                ["end_date"] = "2026-10-20", // rango mayor a 7 días
+                ["end_date"] = "2026-10-20",
                 ["api_key"] = ApiKey
             });
 
