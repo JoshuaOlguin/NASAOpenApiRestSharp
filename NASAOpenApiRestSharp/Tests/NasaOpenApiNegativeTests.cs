@@ -1,4 +1,5 @@
 ﻿using NASAOpenApiRestSharp.Models.Common;
+using RestSharp;
 using System.Net;
 
 namespace NASAOpenApiRestSharp.Tests
@@ -46,6 +47,29 @@ namespace NASAOpenApiRestSharp.Tests
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
             Assert.That(Deserialize<ErrorResponse>(response).Error.Code, Is.EqualTo("API_KEY_INVALID"));
+        }
+
+
+        [TestCase("28-10-2026", "DD-MM-YYYY format")]
+        [TestCase("2026/10/28", "slash separators")]
+        [TestCase("abc", "non-date text")]
+        [TestCase("2026-13-01", "month out of range")]
+        [TestCase("2026-02-30", "non-existent date (Feb 30)")]
+        public async Task NeoFeed_RejectsInvalidStartDate(string invalidDate, string description)
+        {
+            var request = new RestRequest(string.Empty, Method.Get)
+                .AddQueryParameter("start_date", invalidDate)
+                .AddQueryParameter("end_date", ValidRange.End)
+                .AddQueryParameter("api_key", ApiKey);
+
+            var response = await Client.ExecuteAsync(request);
+
+            var statusCode = (int)response.StatusCode;
+
+            Assert.That(statusCode, Is.GreaterThanOrEqualTo(400),
+                $"Se esperaba un error 4xx para '{description}' pero se recibió {statusCode}");
+            Assert.That(statusCode, Is.LessThan(500),
+                $"Se esperaba un error 4xx (no 5xx) para '{description}' pero se recibió {statusCode}");
         }
 
         [Test(Description = "Verify Neo Look Up API endpoint returns http code 403 Forbidden for invalid API key")]
