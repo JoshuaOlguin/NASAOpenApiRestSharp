@@ -39,6 +39,55 @@ jobs:
         paths: "TestResults/*.trx"
         show: "all"
 
+    - name: Test results with status and duration
+      if: ${{ !cancelled() }}
+      run: |
+        python3 - <<'EOF'
+        import glob, os
+        import xml.etree.ElementTree as ET
+
+        ns = {'t': 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010'}
+
+        def to_seconds(d):
+            h, m, s = d.split(':')
+            return int(h) * 3600 + int(m) * 60 + float(s)
+
+        icons = {'Passed': '✅ Passed', 'Failed': '❌ Failed', 'NotExecuted': '⏭️ Skipped'}
+        rows, total_time = [], 0.0
+        counts = {'Passed': 0, 'Failed': 0, 'NotExecuted': 0}
+
+        for f in glob.glob('TestResults/*.trx'):
+            root = ET.parse(f).getroot()
+            for r in root.iterfind('.//t:UnitTestResult', ns):
+                name = r.get('testName', '').replace('|', '\\|')
+                outcome = r.get('outcome', 'Unknown')
+                secs = to_seconds(r.get('duration', '00:00:00'))
+                total_time += secs
+                counts[outcome] = counts.get(outcome, 0) + 1
+                msg_el = r.find('t:Output/t:ErrorInfo/t:Message', ns)
+                msg = ''
+                if msg_el is not None and msg_el.text:
+                    msg = msg_el.text.strip().replace('\n', ' ').replace('|', '\\|')[:150]
+                rows.append((name, outcome, secs, msg))
+
+        overall = '❌ Failed' if counts.get('Failed', 0) else '✅ Passed'
+        lines = [
+            '## Test results',
+            '',
+            f'**Status:** {overall} &nbsp;|&nbsp; **Total time:** {total_time:.1f}s &nbsp;|&nbsp; '
+            f'✅ {counts.get("Passed", 0)} passed, ❌ {counts.get("Failed", 0)} failed, '
+            f'⏭️ {counts.get("NotExecuted", 0)} skipped',
+            '',
+            '| Status | Test | Duration | Error |',
+            '|---|---|---|---|',
+        ]
+        for name, outcome, secs, msg in sorted(rows, key=lambda x: x[0]):
+            lines.append(f'| {icons.get(outcome, outcome)} | `{name}` | {secs:.2f}s | {msg} |')
+
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as out:
+            out.write('\n'.join(lines) + '\n')
+        EOF
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
