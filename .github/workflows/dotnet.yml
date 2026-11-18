@@ -32,13 +32,6 @@ jobs:
         --logger "trx;LogFileName=TestResults.trx"
         --results-directory ./TestResults
 
-    - name: Test summary
-      uses: test-summary/action@v2
-      if: ${{ !cancelled() }}
-      with:
-        paths: "TestResults/*.trx"
-        show: "all"
-
     - name: Test results with status and duration
       if: ${{ !cancelled() }}
       run: |
